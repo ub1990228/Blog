@@ -1,32 +1,20 @@
+# _*_ Coding:utf-8 _*_
 import os
-
 from flask import Flask
-from . import db, auth, blog
+from flask_sqlalchemy import SQLAlchemy
+from config import config
+db = SQLAlchemy()
 
 
-def create_app(test_config=None):
+def create_app(config_name):
     app = Flask(__name__, instance_relative_config=True)
-    app.config.from_mapping(
-        SECRET_KEY = 'dev',
-        DATABASE = os.path.join(app.instance_path, 'app.sqlite'),
-    )
-    if test_config is None:
-        # 在不进行测试时，加载实例配置
-        app.config.from_pyfile('config.py', silent=True)
-    else:
-        # 如果传入，则加载测试配置
-        app.config.from_mapping(test_config)
-    # 确保实例文件夹存在
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
-    
+    app.config.from_object(config[config_name])
+    config[config_name].init_app(app)
     db.init_app(app)
-
-    app.register_blueprint(auth.bp)
-
-    app.register_blueprint(blog.bp)
-    app.add_url_rule('/', endpoint='index')
-
+    # 蓝图导入不能放在上面，当你从其他模块导入蓝图的时候就需要 db 了，
+    # 但是这个时候db 还没有生成，所以会报出错误 提示不可以从当中导入相应的模块
+    from app.auth import auth as auth_blueprint
+    from app.blog import blog as blog_blueprint
+    app.register_blueprint(auth_blueprint)
+    app.register_blueprint(blog_blueprint)
     return app
