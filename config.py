@@ -3,7 +3,7 @@ import os
 
 
 class Config:
-    SECRET_KEY = os.urandom(24)
+    SECRET_KEY = os.urandom(2)
     """
     动态追踪修改
     """
